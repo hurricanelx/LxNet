@@ -11,6 +11,10 @@ All these layers are implemented by Numpy with loops
 
 The Solver class help to train the model and to adjust each layer with the gradient 
 
+## dataset
+
+I use cifar-10 as an example. CIFAR:http://www.cs.toronto.edu/~kriz/cifar.html
+dataset should be put in the dataset directory
 
 ## test
 
