@@ -13,11 +13,11 @@ The Solver class help to train the model and to adjust each layer with the gradi
 
 ## dataset
 
-I use cifar-10 as an example. CIFAR:http://www.cs.toronto.edu/~kriz/cifar.html
-dataset should be put in the dataset directory
+I use cifar-10 as an example. CIFAR:http://www.cs.toronto.edu/~kriz/cifar.html</br>
+dataset should be put into the dataset directory
 
 ## test
 
-A very simple example is written in test.py
-You may find that the model can not fit the data very well.
+A very simple example is written in test.py</br></br>
+You may find that the model can not fit the data very well.</br></br>
 It may due to the very shallow structure.
