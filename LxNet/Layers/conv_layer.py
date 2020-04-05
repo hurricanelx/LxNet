@@ -38,6 +38,36 @@ class conv:
         out += b
         return out
 
+    def forward_fft(self, x):
+        self.x = x
+        self.N = x.shape[0]
+        N, C, F, H, HH, WW, H_new, W_new = self.N, self.C, self.F, self.H, self.HH, self.WW, self.H_new, self.W_new
+        x, w, b = self.x, self.w, self.b
+        pad = self.pad
+        stride = self.stride
+        out = np.zeros((N, F, H_new, W_new))
+        YN = H + HH - 1
+        ccc = HH - 1 - pad
+        FFT_N = 2 ** (int(np.log2(YN)) + 1)
+        self.fft_x = []
+        for z in range(N):
+            fft_x_n = []
+            for i in range(C):
+                fft_x_n.append(np.fft.fft2(x[z][i], (FFT_N, FFT_N)))
+            self.fft_w = []
+            for y in range(F):
+                fft_w_F = []
+                for i in range(C):
+                    fft_w = np.fft.fft2(w[y][i], (FFT_N, FFT_N))
+                    fft_w_F.append(fft_w)
+                    fft_re = fft_w * fft_x_n[i]
+                    re = np.fft.ifft2(fft_re).real[ccc:(YN - ccc):stride, ccc:(YN - ccc):stride]
+                    out[z][y] += re
+                self.fft_w.append(fft_w_F)
+            self.fft_x.append(fft_x_n)
+        b = np.reshape(b, (F, 1, 1))
+        out += b
+
     def backward(self, dout):
         N, F, HH, WW, H_new, W_new = self.N, self.F, self.HH, self.WW, self.H_new, self.W_new
         x, w, b = self.x, self.w, self.b
@@ -59,8 +89,41 @@ class conv:
             dx[z] = dpadx[:, pad:-pad, pad:-pad]
         return dx, dw, db
 
+    def backward_fft(self, dout):
+        N, C, F, H, HH, WW, H_new, W_new = self.N, self.C, self.F, self.H, self.HH, self.WW, self.H_new, self.W_new
+        W = self.W
+        x, w, b = self.x, self.w, self.b
+        fft_w = self.fft_w
+        fft_x = self.fft_x
+        pad = self.pad
+        stride = self.stride
+        dx = np.zeros_like(x)
+        dw = np.zeros_like(w)
+        db = np.sum(dout, axis=(0, 2, 3))
+
+        YN = H + HH - 1
+        ccc = HH - 1 - pad
+        FFT_N = 2 ** (int(np.log2(YN)) + 1)
+
+        for z in range(N):
+            for f in range(F):
+                ttt = np.zeros((H_new * stride, W_new * stride))
+                for i in range(0, H_new * stride, stride):
+                    for j in range(0, W_new * stride, stride):
+                        ttt[i][j] = dout[z][f][i // stride][j // stride]
+                temp_dout = np.pad(ttt, ((ccc, ccc), (ccc, ccc)), 'constant')
+                fft_dout = np.fft.ifft2(temp_dout, (FFT_N, FFT_N))
+                for c in range(C):
+                    temp_dx = fft_dout * fft_w[z][c]
+                    temp_dw = fft_dout * fft_x[f][c]
+                    temp_dx = np.fft.fft2(temp_dx).real[:H][:W]
+                    temp_dw = np.fft.fft2(temp_dw).real[:HH][:WW]
+                    dx[z][c] = temp_dx
+                    dw[f][c] = temp_dw
+        return dx, dw, db
+
     def optim(self, dout, lr=1e-5):
         dx, dw, db = self.backward(dout)
-        self.W -= lr*dw
-        self.b -= lr*db
+        self.W -= lr * dw
+        self.b -= lr * db
         return dx
