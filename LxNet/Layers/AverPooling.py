@@ -2,7 +2,14 @@ import numpy as np
 
 
 class AverPooling:
+    """
+    The average pooling layer, which output is the average value of the small parts of inputs
+    """
     def __init__(self, pool=(2, 2), stride=2):
+        """
+        :param pool: A tuple or a list
+        :param stride: A integer
+        """
         if len(pool) == 2:
             self.pool_height = pool[0]
             self.pool_width = pool[1]

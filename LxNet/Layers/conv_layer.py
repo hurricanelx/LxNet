@@ -108,9 +108,7 @@ class conv:
         for z in range(N):
             for f in range(F):
                 ttt = np.zeros((H_new * stride, W_new * stride))
-                for i in range(0, H_new * stride, stride):
-                    for j in range(0, W_new * stride, stride):
-                        ttt[i][j] = dout[z][f][i // stride][j // stride]
+                ttt[::stride][::stride] = dout[z][f]
                 temp_dout = np.pad(ttt, ((ccc, ccc), (ccc, ccc)), 'constant')
                 fft_dout = np.fft.ifft2(temp_dout, (FFT_N, FFT_N))
                 for c in range(C):
